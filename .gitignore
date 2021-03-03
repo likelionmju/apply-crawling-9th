@@ -1,0 +1,6 @@
+venv
+.idea
+apply_crawling.iml
+chromedriver
+crawling.zip
+지원자목록.csv
