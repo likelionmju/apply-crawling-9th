@@ -1,29 +1,14 @@
 from selenium.webdriver import Chrome, ChromeOptions
 from pathos.multiprocessing import ProcessPool
 from pathlib import Path
-from multiprocessing import Manager
 import bs4 as bs
 import csv
-import os
 import requests
 import zipfile
 import time
-import copy
 import re
-
-
-class LikelionApplyCrawlerSettings:
-
-    def __init__(self) -> None:
-        self.driver_options = ChromeOptions()
-        self.driver_options.headless = True
-
-        # self.admin_id = input("관리자 아이디: ")
-        # self.admin_pass = input("관리자 비밀번호: ")
-        # self.univ_code = self.admin_id.split('@')[0]
-        # self.
-        # self.
-        # self.
+import shutil
+import chardet
 
 
 def is_sns(link) -> bool:
@@ -33,42 +18,65 @@ def is_sns(link) -> bool:
     return False
 
 
-def is_img(img) -> bool:
-    return Path(img).suffix in img_extensions
+def is_img(img: Path) -> bool:
+    return img.suffix in img_extensions
 
 
-def unzip(target, to) -> None:
+def is_doc(doc: Path) -> bool:
+    return doc.suffix in doc_extensions
+
+
+def is_archive(archive: Path) -> bool:
+    return archive.suffix in archive_extensions
+
+
+def unzip(target: Path, to) -> None:
     with zipfile.ZipFile(target) as zip_file:
-        zip_file.extractall(to)
+        info = zip_file.infolist()
+        for file in info:
+            t = Path(file.filename)
+            if t.is_dir():
+                continue
+            if not (is_doc(t) or is_img(t)):
+                # if file is img or document continue
+                continue
+            if file.flag_bits != 2048:
+                # if not utf-8
+                file.filename = file.filename.encode("cp437").decode("cp949")
+            zip_file.extract(file, to)
 
 
-def get_n_deep_copies(target, n: int) -> list:
-    return [copy.deepcopy(target) for _ in range(n)]
+def reformat_file(file: Path) -> None:
+    if is_img(file):
+        file.rename(f"{file.parent}/시간표{file.suffix}")
+    elif is_doc(file):
+        file.rename(f"{file.parent}/포트폴리오{file.suffix}")
 
 
-def download_file_by_url(u, save_path, chunk_size=128) -> None:
+def download_file_by_url(u, save_path: Path) -> None:
     # source: https://stackoverflow.com/a/9419208
     r = requests.get(u, stream=True)
     with open(save_path, 'wb') as fd:
-        for chunk in r.iter_content(chunk_size=chunk_size):
-            fd.write(chunk)
+        r.raw.decode_content = True
+        shutil.copyfileobj(r.raw, fd)
 
 
 def download_applicant_file(applicant: dict):
     if applicant["name"] in exclude_applicants:
         return
-    if applicant["file"] == "X":
-        return
-    path = f"./지원자 서류/{applicant['major']} {applicant['entrance_year']} {applicant['name']}"
-    if not os.path.exists(path):
-        os.mkdir(path)
-    file_name = f"{path}/{applicant['file'].split('/')[-1]}"
-    if is_img(file_name):
-        file_name = f"{path}/시간표{Path(file_name).suffix}"
-    download_file_by_url(applicant["file"], file_name)
-    if Path(file_name).suffix == ".zip":
-        unzip(file_name, f"{path}/시간표 및 포트폴리오")
-        os.remove(file_name)
+    with Path(f"./지원자 서류/{applicant['major']} {applicant['entrance_year']} {applicant['name']}") as path:
+        if applicant["file"] == "X":
+            return
+        if not path.exists():
+            path.mkdir()
+        target_file = Path(f"{path}/{applicant['file'].split('/')[-1]}")
+        download_file_by_url(applicant["file"], target_file)
+        if is_archive(target_file):
+            archive_dir = Path(f"{path}/시간표 및 포트폴리오")
+            unzip(target_file, archive_dir)
+            target_file.unlink()
+        else:
+            reformat_file(target_file)
 
 
 class LikelionApplyCrawler:
@@ -211,6 +219,8 @@ if __name__ == "__main__":
         required_dir.mkdir()
     sns_list = ("facebook", "instagram", "twitter")
     img_extensions = (".png", ".jpg", ".jpeg", ".PNG", ".JPG", ".JPEG")
+    doc_extensions = (".pdf", ".docx", ".hwp")
+    archive_extensions = (".zip", ".tar.gz", ".rar", ".7z")
     a_id = input("관리자 ID: ")
     a_pass = input("관리자 PW: ")
     exclude_applicants = input("제외할 사람: ").split() or ["테스트", "한준혁", "김예빈", "박성제"]
@@ -239,13 +249,3 @@ if __name__ == "__main__":
             print(f"total applicants count: {len(applicants)}")
             main_pool.map(download_applicant_file, applicants)
             print(f"finish download time: {time.time() - start_time}s")
-
-        # with ProcessPool(nodes=4) as main_pool:
-        #     c.load_univ_page()
-        #     c.extract_all_applicant_url()
-        #     main_pool.map(c.add_page_source, applicant_urls)
-        # c.export_csv()
-        # with ProcessPool(nodes=4) as sub_pool:
-        #     sub_pool.map(c.parse_applicant_page, sources)
-
-
