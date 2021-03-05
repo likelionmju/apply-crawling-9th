@@ -9,6 +9,9 @@ from shutil import copyfileobj
 from docx import Document
 
 
+# Important! This source is use ChromeDriver please download and move to this file's directory
+
+# If link is sns(facebook, instagram, twitter) return True
 def is_sns(link) -> bool:
     for lk in sns_list:
         if lk in link:
@@ -16,18 +19,22 @@ def is_sns(link) -> bool:
     return False
 
 
+# If file is image(png, jpg, jpeg) return True
 def is_img(img: Path) -> bool:
     return img.suffix in img_extensions
 
 
+# If file is document(docx, pdf, hwp) return True
 def is_doc(doc: Path) -> bool:
     return doc.suffix in doc_extensions
 
 
+# If file is archived return True
 def is_archive(archive: Path) -> bool:
     return archive.suffix in archive_extensions
 
 
+# Unzip file to (param: to)
 def unzip(target: Path, to) -> None:
     with ZipFile(target) as zip_file:
         info = zip_file.infolist()
@@ -36,14 +43,16 @@ def unzip(target: Path, to) -> None:
             if t.is_dir():
                 continue
             if not (is_doc(t) or is_img(t)):
-                # if file is img or document continue
+                # If file is img or document continue
                 continue
             if file.flag_bits != 2048:
-                # if not utf-8
+                # If not utf-8
+                # This code is fix Korean file name error
                 file.filename = file.filename.encode("cp437").decode("cp949")
             zip_file.extract(file, to)
 
 
+# File rename if file is image or document
 def reformat_file(file: Path) -> None:
     if is_img(file):
         file.rename(f"{file.parent}/시간표{file.suffix}")
@@ -51,6 +60,7 @@ def reformat_file(file: Path) -> None:
         file.rename(f"{file.parent}/포트폴리오{file.suffix}")
 
 
+# Download file by url
 def download_file_by_url(u, save_path: Path) -> None:
     # source: https://stackoverflow.com/a/9419208
     r = get(u, stream=True)
@@ -59,7 +69,8 @@ def download_file_by_url(u, save_path: Path) -> None:
         copyfileobj(r.raw, fd)
 
 
-def download_applicant_file(applicant: dict):
+# Download applicant's extra files
+def download_applicant_file(applicant: dict) -> None:
     if applicant["name"] in exclude_applicants:
         return
     with Path(f"./지원자 서류/{applicant['major']} {applicant['entrance_year'][2:]} {applicant['name']}") as path:
@@ -77,7 +88,8 @@ def download_applicant_file(applicant: dict):
             reformat_file(target_file)
 
 
-def export_docx(applicant: dict):
+# Export applicant's data
+def export_docx(applicant: dict) -> None:
     docx = Document()
     if applicant["name"] in exclude_applicants:
         return
@@ -132,17 +144,21 @@ class LikelionApplyCrawler:
             print(f"finish login time: {current_time() - start_time}s")
             return driver.get_cookies()
 
+    # Get page source at https://apply.likelion.org/apply/univ/~
     def request_univ_page_source(self) -> str:
         return get(self.univ_url, cookies=self.cookies).text
 
+    # Get all applicant primary keys(maybe)
     def extract_all_applicant_pks(self, univ_page_source: str) -> None:
         univ_page = BeautifulSoup(univ_page_source, features=self.__html_parser)
         self.applicant_pks = [applicant.get("href").split("/")[-1]
                               for applicant in univ_page.select(self.__applicants_path)]
 
+    # Get applicant's source page at https://apply.likelion.org/apply/applicant/~
     def request_applicant_source(self, applicant_pk: str) -> str:
         return get(f"{self.applicant_url}/{applicant_pk}", cookies=self.cookies).text
 
+    # Parse applicant's source page using BeautifulSoup
     def parse_applicant_page(self, page) -> dict:
         soup = BeautifulSoup(page, features="html.parser")
         applicant_info_container = soup.select_one(self.__applicant_info_container_path)
@@ -166,6 +182,7 @@ class LikelionApplyCrawler:
             elif "cdn" in item:
                 applicant_file = item
 
+        # If you have to modify questions please add or delete "q~"
         applicant = {
             "name": applicant_name,
             "entrance_year": user_info_list[0].contents[1].text,
@@ -190,6 +207,7 @@ class LikelionApplyCrawler:
 
 if __name__ == "__main__":
     import sys
+
     sys.setrecursionlimit(3000)
 
     required_dir = Path("./지원자 서류")
@@ -203,7 +221,7 @@ if __name__ == "__main__":
     a_pass = input("관리자 PW: ")
     exclude_applicants = input("제외할 사람: ").split() or ["테스트", "한준혁", "김예빈", "박성제"]
 
-    # please edit to own questions
+    # Please edit to own questions
     applicant_ko_keys = {
         "name": "이름",
         "entrance_year": "입학 년도",
@@ -224,6 +242,7 @@ if __name__ == "__main__":
         source = c.request_univ_page_source()
         c.extract_all_applicant_pks(source)
         print(f"finish extract pks time: {current_time() - start_time}s")
+        # Start multi processing
         with ProcessPool() as main_pool:
             applicant_sources = main_pool.amap(c.request_applicant_source, c.applicant_pks).get()
             print(f"finish request sources time: {current_time() - start_time}s")
