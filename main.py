@@ -1,14 +1,12 @@
 from selenium.webdriver import Chrome, ChromeOptions
 from pathos.multiprocessing import ProcessPool
 from pathlib import Path
-import bs4 as bs
-import csv
-import requests
-import zipfile
-import time
-import re
-import shutil
-import chardet
+from bs4 import BeautifulSoup
+from requests import get
+from zipfile import ZipFile
+from time import time as current_time
+from shutil import copyfileobj
+from docx import Document
 
 
 def is_sns(link) -> bool:
@@ -31,7 +29,7 @@ def is_archive(archive: Path) -> bool:
 
 
 def unzip(target: Path, to) -> None:
-    with zipfile.ZipFile(target) as zip_file:
+    with ZipFile(target) as zip_file:
         info = zip_file.infolist()
         for file in info:
             t = Path(file.filename)
@@ -55,20 +53,20 @@ def reformat_file(file: Path) -> None:
 
 def download_file_by_url(u, save_path: Path) -> None:
     # source: https://stackoverflow.com/a/9419208
-    r = requests.get(u, stream=True)
+    r = get(u, stream=True)
     with open(save_path, 'wb') as fd:
         r.raw.decode_content = True
-        shutil.copyfileobj(r.raw, fd)
+        copyfileobj(r.raw, fd)
 
 
 def download_applicant_file(applicant: dict):
     if applicant["name"] in exclude_applicants:
         return
-    with Path(f"./지원자 서류/{applicant['major']} {applicant['entrance_year']} {applicant['name']}") as path:
-        if applicant["file"] == "X":
-            return
+    with Path(f"./지원자 서류/{applicant['major']} {applicant['entrance_year'][2:]} {applicant['name']}") as path:
         if not path.exists():
             path.mkdir()
+        if applicant["file"] == "X":
+            return
         target_file = Path(f"{path}/{applicant['file'].split('/')[-1]}")
         download_file_by_url(applicant["file"], target_file)
         if is_archive(target_file):
@@ -77,6 +75,20 @@ def download_applicant_file(applicant: dict):
             target_file.unlink()
         else:
             reformat_file(target_file)
+
+
+def export_docx(applicant: dict):
+    docx = Document()
+    if applicant["name"] in exclude_applicants:
+        return
+    for key in applicant_ko_keys.keys():
+        if "q" in key:
+            docx.add_paragraph("")
+            docx.add_paragraph(applicant_ko_keys[key]).bold = True
+            docx.add_paragraph(applicant[key])
+        else:
+            docx.add_paragraph(f"{applicant_ko_keys[key]}: {applicant[key]}")
+    docx.save(f"./지원자 서류/{applicant['major']} {applicant['entrance_year'][2:]} {applicant['name']}/지원서.docx")
 
 
 class LikelionApplyCrawler:
@@ -93,8 +105,6 @@ class LikelionApplyCrawler:
     __applicant_answer_container_path = ".answer_view > .applicant_detail_page"
     __applicants_path = f"{__applicant_info_container_path} > div.applicant_page > a"
 
-    __applicant_count_regex = re.compile(" [0-9]+")
-
     __html_parser = "html.parser"
 
     def __init__(self, admin_id: str, admin_pass: str, headless: bool = True) -> None:
@@ -110,7 +120,7 @@ class LikelionApplyCrawler:
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        print(f"async multi processing time: {time.time() - start_time}s")
+        print(f"async multi processing time: {current_time() - start_time}s")
 
     def login(self) -> dict:
         driver_options = ChromeOptions()
@@ -120,11 +130,11 @@ class LikelionApplyCrawler:
             driver.find_element_by_id(self.__id_path).send_keys(self.__admin_id)
             driver.find_element_by_id(self.__password_path).send_keys(self.__admin_pass)
             driver.find_element_by_xpath(self.__login_path).submit()
-            print(f"finish login time: {time.time() - start_time}s")
+            print(f"finish login time: {current_time() - start_time}s")
             return driver.get_cookies()
 
     def request_univ_page_source(self) -> str:
-        return requests.get(self.univ_url, cookies=self.cookies).text
+        return get(self.univ_url, cookies=self.cookies).text
 
     #
     # def get_answered_applicant_count(self, univ_page_source: str) -> int:
@@ -134,16 +144,16 @@ class LikelionApplyCrawler:
     #     return int(find)
 
     def extract_all_applicant_pks(self, univ_page_source: str) -> None:
-        univ_page = bs.BeautifulSoup(univ_page_source, features=self.__html_parser)
+        univ_page = BeautifulSoup(univ_page_source, features=self.__html_parser)
         self.applicant_pks = [applicant.get("href").split("/")[-1]
                               for applicant in univ_page.select(self.__applicants_path)]
 
     def request_applicant_source(self, applicant_pk: str) -> str:
-        return requests.get(f"{self.applicant_url}/{applicant_pk}", cookies=self.cookies).text
+        return get(f"{self.applicant_url}/{applicant_pk}", cookies=self.cookies).text
 
     def parse_applicant_page(self, page) -> dict:
         try:
-            soup = bs.BeautifulSoup(page, features="html.parser")
+            soup = BeautifulSoup(page, features="html.parser")
             applicant_info_container = soup.select_one(self.__applicant_info_container_path)
             applicant_answer_container = soup.select_one(self.__applicant_answer_container_path)
 
@@ -224,28 +234,31 @@ if __name__ == "__main__":
     a_id = input("관리자 ID: ")
     a_pass = input("관리자 PW: ")
     exclude_applicants = input("제외할 사람: ").split() or ["테스트", "한준혁", "김예빈", "박성제"]
+    applicant_ko_keys = {
+        "name": "이름",
+        "entrance_year": "입학 년도",
+        "major": "전공",
+        "phone_num": "전화번호",
+        "email": "이메일",
+        "git": "GitHub",
+        "sns": "SNS",
+        "q1": "지원 동기",
+        "q2": "만들고 싶은 서비스",
+        "q3": "참여했던 팀 활동 중 가장 기억에 남는 활동과 느낀 점을 작성해주세요.",
+        "q4": "기억에 남는 프로그래밍 경험과 느낀 점을 작성해주세요. 만약 없다면, 어떤 것을 배우고 싶은지 작성해주세요.",
+        "q5": "첨부파일에 1학기 시간표를 캡쳐해서 제출해주세요. 만약 포트폴리오를 제출하고 싶으시다면 함께 제출해주세요. (압축파일로 제출해주시면 됩니다.)",
+    }
 
-    # manager = Manager()
-    # applicants = manager.dict()
-    # sources = manager.list()
-    # applicant_urls = manager.list()
-    # with LikelionApplyCrawler() as c:
-    #     start_time = time.time()
-    #     c.login()
-    #     c.load_univ_page()
-    #     for url in c.get_all_applicant_url():
-    #         parse_page(url)
-    #     c.export_csv()
-    # print(f"single processing time: {time.time() - start_time}")
-    start_time = time.time()
+    start_time = current_time()
     with LikelionApplyCrawler(admin_id=a_id, admin_pass=a_pass) as c:
         source = c.request_univ_page_source()
         c.extract_all_applicant_pks(source)
-        print(f"finish extract pks time: {time.time() - start_time}s")
+        print(f"finish extract pks time: {current_time() - start_time}s")
         with ProcessPool() as main_pool:
             applicant_sources = main_pool.amap(c.request_applicant_source, c.applicant_pks).get()
-            print(f"finish request sources time: {time.time() - start_time}s")
+            print(f"finish request sources time: {current_time() - start_time}s")
             applicants = main_pool.amap(c.parse_applicant_page, applicant_sources).get()
             print(f"total applicants count: {len(applicants)}")
             main_pool.map(download_applicant_file, applicants)
-            print(f"finish download time: {time.time() - start_time}s")
+            print(f"finish download time: {current_time() - start_time}s")
+            main_pool.map(export_docx, applicants)
