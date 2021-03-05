@@ -73,7 +73,7 @@ def download_file_by_url(u, save_path: Path) -> None:
 def download_applicant_file(applicant: dict) -> None:
     if applicant["name"] in exclude_applicants:
         return
-    with Path(f"./지원자 서류/{applicant['major']} {applicant['entrance_year'][2:]} {applicant['name']}") as path:
+    with Path(f"./지원자 서류/{applicant['major']}_{applicant['entrance_year'][2:]}_{applicant['name']}") as path:
         if not path.exists():
             path.mkdir()
         if applicant["file"] == "X":
@@ -100,7 +100,7 @@ def export_docx(applicant: dict) -> None:
             docx.add_paragraph(applicant[key])
         else:
             docx.add_paragraph(f"{applicant_ko_keys[key]}: {applicant[key]}")
-    docx.save(f"./지원자 서류/{applicant['major']} {applicant['entrance_year'][2:]} {applicant['name']}/지원서.docx")
+    docx.save(f"./지원자 서류/{applicant['major']}_{applicant['entrance_year'][2:]}_{applicant['name']}/지원서.docx")
 
 
 class LikelionApplyCrawler:
@@ -219,7 +219,7 @@ if __name__ == "__main__":
     archive_extensions = (".zip", ".tar.gz", ".rar", ".7z")
     a_id = input("관리자 ID: ")
     a_pass = input("관리자 PW: ")
-    exclude_applicants = input("제외할 사람: ").split() or ["테스트", "한준혁", "김예빈", "박성제"]
+    exclude_applicants = input("제외할 사람: ").split()
 
     # Please edit to own questions
     applicant_ko_keys = {
