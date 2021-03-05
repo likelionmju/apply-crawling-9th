@@ -42,6 +42,7 @@ class LoginFilter(AbstractFilter):
         admin_info = org_param["admin_info"]
         data = {ck["name"]: ck["value"] for ck in login(admin_info["id"], admin_info["password"])}
         if data.get("sessionid") is None:
+            print("login failed...")
             return
         next_param = {
             "univ_code": org_param["univ_code"],
@@ -75,7 +76,7 @@ class ApplicantPageParseFilter(AbstractFilter):
     def operate(self) -> None:
         from crawler import parse_applicant_page
         org_param = self._src_queue.get()
-        self._snk_queue.put(parse_applicant_page(org_param, 5))
+        self._snk_queue.put(parse_applicant_page(org_param, len(secrets["QUESTIONS"])))
 
 
 class ExitFilter(AbstractFilter):

@@ -20,9 +20,6 @@ def main_processing(param):
 
 
 if __name__ == '__main__':
-    import time
-
-    start = time.time()
     init = Queue()
     init_to_login = Queue()
     login_to_pre = Queue()
@@ -42,4 +39,3 @@ if __name__ == '__main__':
     pks = pre.get()
     with ProcessPool() as main_pool:
         main_pool.map(main_processing, pks)
-    print("end time: ", time.time() - start)

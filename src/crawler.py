@@ -115,14 +115,12 @@ def export_docx(applicant: Applicant) -> None:
     docx = Document()
     if applicant.is_exclude:
         return
-    for answer in applicant.answers:
-        docx.add_paragraph(answer)
-        # if "q" in key:
-        #     docx.add_paragraph("")
-        #     docx.add_paragraph(applicant_ko_keys[key]).bold = True
-        #     docx.add_paragraph(applicant[key])
-        # else:
-        #     docx.add_paragraph(f"{applicant_ko_keys[key]}: {applicant[key]}")
+    for info in applicant.information_stringify():
+        docx.add_paragraph(info)
+    for idx, qna in enumerate(zip(secrets["QUESTIONS"], applicant.answers), 1):
+        docx.add_paragraph("")
+        docx.add_paragraph(f"{idx}. {qna[0]}")
+        docx.add_paragraph(qna[1])
     docx.save(f"{applicant.root_dir}/지원서.docx")
 
 

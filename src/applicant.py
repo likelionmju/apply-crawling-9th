@@ -1,6 +1,5 @@
 import re
 from pathlib import Path
-from filters import secrets
 
 
 class Applicant:
@@ -44,3 +43,14 @@ class Applicant:
 
     def has_file(self):
         return self.cdn_file != "X"
+
+    def information_stringify(self):
+        return [
+            f"이름: {self.name}",
+            f"입학 년도: {self.entrance_year}년",
+            f"전공: {self.major}",
+            f"전화번호: {self.phone_num}",
+            f"이메일: {self.email}",
+            f"GitHub: {self.git}",
+            f"SNS: {self.sns}",
+        ]
