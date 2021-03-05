@@ -101,7 +101,6 @@ class LikelionApplyCrawler:
     __password_path = "id_password"
     __login_path = "//button[@type='submit']"
     __applicant_info_container_path = "#likelion_num"
-    __answered_applicant_count_path = f"{__applicant_info_container_path} > div:nth-child(2) > p:nth-child(2)"
     __applicant_answer_container_path = ".answer_view > .applicant_detail_page"
     __applicants_path = f"{__applicant_info_container_path} > div.applicant_page > a"
 
@@ -136,13 +135,6 @@ class LikelionApplyCrawler:
     def request_univ_page_source(self) -> str:
         return get(self.univ_url, cookies=self.cookies).text
 
-    #
-    # def get_answered_applicant_count(self, univ_page_source: str) -> int:
-    #     univ_page = bs.BeautifulSoup(univ_page_source, features=self.__html_parser)
-    #     info_text = univ_page.select_one(self.__answered_applicant_count_path).string
-    #     find = self.__applicant_count_regex.search(info_text).group()
-    #     return int(find)
-
     def extract_all_applicant_pks(self, univ_page_source: str) -> None:
         univ_page = BeautifulSoup(univ_page_source, features=self.__html_parser)
         self.applicant_pks = [applicant.get("href").split("/")[-1]
@@ -152,78 +144,54 @@ class LikelionApplyCrawler:
         return get(f"{self.applicant_url}/{applicant_pk}", cookies=self.cookies).text
 
     def parse_applicant_page(self, page) -> dict:
-        try:
-            soup = BeautifulSoup(page, features="html.parser")
-            applicant_info_container = soup.select_one(self.__applicant_info_container_path)
-            applicant_answer_container = soup.select_one(self.__applicant_answer_container_path)
+        soup = BeautifulSoup(page, features="html.parser")
+        applicant_info_container = soup.select_one(self.__applicant_info_container_path)
+        applicant_answer_container = soup.select_one(self.__applicant_answer_container_path)
 
-            applicant_name = applicant_info_container.find("h3").string
-            if applicant_name in exclude_applicants:
-                return {"name": applicant_name}
-            user_info_list = applicant_info_container.select("div.row")
-            user_answer_list = applicant_answer_container.select("div.m_mt")
-            additional = [user_info.contents[1].get("href") for user_info in user_info_list[2:]]
-            git = sns = applicant_file = None
+        applicant_name = applicant_info_container.find("h3").string
+        if applicant_name in exclude_applicants:
+            return {"name": applicant_name}
+        user_info_list = applicant_info_container.select("div.row")
+        user_answer_list = applicant_answer_container.select("div.m_mt")
+        additional = [user_info.contents[1].get("href") for user_info in user_info_list[2:]]
+        git = sns = applicant_file = None
 
-            for item in additional:
-                if item is None:
-                    continue
-                if "git" in item:
-                    git = item
-                elif is_sns(item):
-                    sns = item
-                elif "cdn" in item:
-                    applicant_file = item
+        for item in additional:
+            if item is None:
+                continue
+            if "git" in item:
+                git = item
+            elif is_sns(item):
+                sns = item
+            elif "cdn" in item:
+                applicant_file = item
 
-            applicant = {
-                "name": applicant_name,
-                "entrance_year": user_info_list[0].contents[1].text,
-                "major": user_info_list[0].contents[-2].text,
-                "phone_num": user_info_list[1].contents[1].text,
-                "email": user_info_list[1].contents[-2].text,
-                "git": git if git is not None else "X",
-                "sns": sns if sns is not None else "X",
-                "file": applicant_file if applicant_file is not None else "X",
-                "q1": user_answer_list[0].contents[1].text,
-                "q2": user_answer_list[1].contents[1].text,
-                "q3": user_answer_list[2].contents[1].text,
-                "q4": user_answer_list[3].contents[1].text,
-                "q5": user_answer_list[4].contents[1].text,
-            }
-            phone_num = applicant["phone_num"]
-            if len(phone_num) == 11:
-                formatting_phone_num = [phone_num[:3], phone_num[3:7], phone_num[7:]]
-                applicant["phone_num"] = "-".join(formatting_phone_num)
-            return applicant
-        except AttributeError:
-            print("error")
-
-    # def export_csv(self) -> None:
-    #     with open("지원자목록.csv", "w", newline="", encoding="utf-8") as file:
-    #         keys_to_header = {
-    #             "name": "이름",
-    #             "entrance_year": "입학 년도",
-    #             "major": "전공",
-    #             "phone_num": "전화번호",
-    #             "email": "이메일",
-    #             "git": "github",
-    #             "sns": "SNS",
-    #             "file": "file",
-    #             "q1": "지원 동기",
-    #             "q2": "만들고 싶은 서비스",
-    #             "q3": "가장 기억에 남는 활동과 느낀 점",
-    #             "q4": "기억에 남는 프로그래밍 경험과 느낀 점 또는 배우고 싶은 것",
-    #             "q5": "1학기 시간표와 opt(포트폴리오)"
-    #         }
-    #         writer = csv.DictWriter(file, fieldnames=keys_to_header.keys())
-    #         writer.writerow(keys_to_header)
-    #         for applicant in self.applicants.values():
-    #             writer.writerow(applicant)
+        applicant = {
+            "name": applicant_name,
+            "entrance_year": user_info_list[0].contents[1].text,
+            "major": user_info_list[0].contents[-2].text,
+            "phone_num": user_info_list[1].contents[1].text,
+            "email": user_info_list[1].contents[-2].text,
+            "git": git if git is not None else "X",
+            "sns": sns if sns is not None else "X",
+            "file": applicant_file if applicant_file is not None else "X",
+            "q1": user_answer_list[0].contents[1].text,
+            "q2": user_answer_list[1].contents[1].text,
+            "q3": user_answer_list[2].contents[1].text,
+            "q4": user_answer_list[3].contents[1].text,
+            "q5": user_answer_list[4].contents[1].text,
+        }
+        phone_num = applicant["phone_num"]
+        if len(phone_num) == 11:
+            formatting_phone_num = [phone_num[:3], phone_num[3:7], phone_num[7:]]
+            applicant["phone_num"] = "-".join(formatting_phone_num)
+        return applicant
 
 
 if __name__ == "__main__":
     import sys
     sys.setrecursionlimit(3000)
+
     required_dir = Path("./지원자 서류")
     if not required_dir.exists():
         required_dir.mkdir()
@@ -234,6 +202,8 @@ if __name__ == "__main__":
     a_id = input("관리자 ID: ")
     a_pass = input("관리자 PW: ")
     exclude_applicants = input("제외할 사람: ").split() or ["테스트", "한준혁", "김예빈", "박성제"]
+
+    # please edit to own questions
     applicant_ko_keys = {
         "name": "이름",
         "entrance_year": "입학 년도",
