@@ -86,4 +86,5 @@ class ExitFilter(AbstractFilter):
         applicant = self._src_queue.get()
         download_applicant_file(applicant)
         export_docx(applicant)
+        self._snk_queue.put(applicant)
 

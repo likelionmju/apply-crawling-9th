@@ -17,6 +17,7 @@ def main_processing(param):
     parser_filter.start()
     exit_filter.start()
     exit_filter.join()
+    # TODO: 2021/03/06 분석 필터 추가하기
 
 
 if __name__ == '__main__':
