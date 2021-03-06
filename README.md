@@ -111,7 +111,30 @@ Likelion Apply Crawler Project
 
 ### `.docx` 출력 예시
 
-![docx예시](example.png)
+```text
+이름: 홍길동
+입학 년도: 2018년
+전공: 국어국문학과
+전화번호: 010-0000-0000
+이메일: gildong@gildong.com
+GitHub: X
+SNS: X
+
+1. 질문
+답변
+
+2. 질문
+답변
+
+3. 질문
+답변
+
+4. 질문
+답변
+
+5. 질문
+답변
+```
 
 ## 사용 라이브러리
 
