@@ -90,7 +90,7 @@ Likelion Apply Crawler Project
         ...
    ```
 1. 파일의 확장자가 `.zip` 이면,  
-   `../지원자 서류/학과_학번_이름/시간표 및 포트폴리오`에 압축해제
+   `../지원자 서류/학과_학번_이름/시간표 및 포트폴리오/`에 압축해제
    ```python
    def unzip(target: Path, to) -> None:
         ...
