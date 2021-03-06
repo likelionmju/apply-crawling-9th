@@ -18,7 +18,6 @@ def main_processing(param):
     exit_filter.start()
     exit_filter.join()
     # TODO: 2021/03/06 분석 필터 추가하기
-#     ¡™£¢∞§¶•ªº–≠«``∑´´†¥¨ˆˆøπ“‘åß∂ƒ©˙∆˚¬…æΩ≈ç√∫˜˜≤≥ç
 
 
 if __name__ == '__main__':
@@ -32,15 +31,23 @@ if __name__ == '__main__':
     init_filter = InitFilter(init, init_to_login)
     login_filter = LoginFilter(init_to_login, login_to_pre)
     pre_parse_filter = PreParseFilter(login_to_pre, pre)
+    pre_parse_filter.daemon = True
 
     init_filter.start()
     login_filter.start()
     pre_parse_filter.start()
-    pre_parse_filter.join()
+    login_filter.join()
+
+    if not login_filter.success:
+        import sys
+        sys.exit(1)
 
     pks = pre.get()
     with ProcessPool() as main_pool:
-        main_pool.map(main_processing, pks)
+        with yaspin(text="Parse applicant's page and export data...", color="yellow", timer=True) as sp:
+            main_pool.map(main_processing, pks)
+            sp.text = "Crawling complete..."
+            sp.ok("🦁")
 
 
 

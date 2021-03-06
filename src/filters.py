@@ -37,15 +37,22 @@ class InitFilter(AbstractFilter):
 
 class LoginFilter(AbstractFilter):
 
+    def __init__(self, src_queue: Queue, snk_queue: Queue) -> None:
+        super().__init__(src_queue, snk_queue)
+        self._custom_spinner = True
+        self.success = None
+
     def operate(self) -> None:
         from crawler import login
         org_param = self._src_queue.get()
         admin_info = org_param["admin_info"]
-        with yaspin(text="Login start...", timer=True, color="yellow") as sp:
+        with yaspin(text=self.__str__(), timer=True, color="yellow") as sp:
             data = {ck["name"]: ck["value"] for ck in login(admin_info["id"], admin_info["password"])}
             if data.get("sessionid") is None:
+                sp.text = "Login failed...(Please check your id and password in secrets.json)"
                 sp.fail("˙∆˚")
                 return
+            sp.text = "Login success..."
             sp.ok("🦁")
         next_param = {
             "univ_code": org_param["univ_code"],
@@ -53,8 +60,14 @@ class LoginFilter(AbstractFilter):
         }
         self._snk_queue.put(next_param)
 
+    def __str__(self) -> str:
+        return "Login..."
+
 
 class PreParseFilter(AbstractFilter):
+
+    def __init__(self, src_queue: Queue, snk_queue: Queue) -> None:
+        super().__init__(src_queue, snk_queue)
 
     def operate(self) -> None:
         from crawler import request_univ_page_source, extract_all_applicant_pks
@@ -70,9 +83,7 @@ class RequestApplicantPageFilter(AbstractFilter):
     def operate(self) -> None:
         from crawler import request_applicant_source
         org_param = self._src_queue.get()
-        with yaspin(text=f"Request applicant(PK: {org_param['pk']}) page...", timer=True, color="yellow") as sp:
-            new_param = request_applicant_source(org_param["pk"], org_param["login_info"])
-            sp.ok("🦁")
+        new_param = request_applicant_source(org_param["pk"], org_param["login_info"])
         self._snk_queue.put(new_param)
 
 
@@ -80,14 +91,8 @@ class ApplicantPageParseFilter(AbstractFilter):
 
     def operate(self) -> None:
         from crawler import parse_applicant_page
-        with yaspin(text="Parse applicant's info...", timer=True, color="yellow") as sp:
-            org_param = self._src_queue.get()
-            applicant = parse_applicant_page(org_param, len(secrets["QUESTIONS"]))
-            if applicant.is_exclude:
-                sp.text = "This applicant is excluded..."
-            else:
-                sp.text = applicant.name
-            sp.ok("🦁")
+        org_param = self._src_queue.get()
+        applicant = parse_applicant_page(org_param, len(secrets["QUESTIONS"]))
         self._snk_queue.put(applicant)
 
 
@@ -96,12 +101,8 @@ class ExitFilter(AbstractFilter):
     def operate(self) -> None:
         from crawler import download_applicant_file, export_docx
         applicant = self._src_queue.get()
-        with yaspin(text="Finalize...", timer=True, color="yellow") as sp:
-            if not applicant.is_exclude:
-                download_applicant_file(applicant)
-                sp.write(f"> Download {applicant.name}'s file complete")
-                export_docx(applicant)
-                sp.write(f"> Export {applicant.name}'s info to {applicant.root_dir}/지원서.docx complete")
-                sp.ok("🦁")
-            self._snk_queue.put(applicant)
+        if not applicant.is_exclude:
+            download_applicant_file(applicant)
+            export_docx(applicant)
+        self._snk_queue.put(applicant)
 
