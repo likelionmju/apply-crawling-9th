@@ -18,7 +18,7 @@ Likelion Apply Crawler Project
 ## 실행 전
 
 1. Chrome 버전에 맞는 [ChromeDriver](https://chromedriver.chromium.org/downloads) 를 `./`에 다운
-1. `secrets.json`에 다음 정보를 작성한다.
+1. `secrets.json`에 다음 정보를 작성
     + `ADMIN_ID`: 관리자 아이디
     + `ADMIN_PASSWORD`: 관리자 비밀번호
     + `EXCLUDES`: 제외할 사람들 이름 _(없다면 빈 리스트)_
