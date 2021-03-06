@@ -1,6 +1,7 @@
 from threading import Thread
 from queue import Queue
 from yaspin import yaspin
+from yaspin.spinners import Spinners
 
 
 secrets = dict()
@@ -40,18 +41,19 @@ class LoginFilter(AbstractFilter):
     def __init__(self, src_queue: Queue, snk_queue: Queue) -> None:
         super().__init__(src_queue, snk_queue)
         self._custom_spinner = True
-        self.success = None
+        self.success = False
 
     def operate(self) -> None:
         from crawler import login
         org_param = self._src_queue.get()
         admin_info = org_param["admin_info"]
-        with yaspin(text=self.__str__(), timer=True, color="yellow") as sp:
+        with yaspin(Spinners.aesthetic, text=self.__str__(), timer=True, color="yellow") as sp:
             data = {ck["name"]: ck["value"] for ck in login(admin_info["id"], admin_info["password"])}
             if data.get("sessionid") is None:
                 sp.text = "Login failed...(Please check your id and password in secrets.json)"
                 sp.fail("˙∆˚")
                 return
+            self.success = True
             sp.text = "Login success..."
             sp.ok("🦁")
         next_param = {

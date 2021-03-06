@@ -25,7 +25,6 @@ if __name__ == '__main__':
     init_to_login = Queue()
     login_to_pre = Queue()
     pre = Queue()
-
     init.put("../secrets.json")
 
     init_filter = InitFilter(init, init_to_login)
@@ -44,7 +43,7 @@ if __name__ == '__main__':
 
     pks = pre.get()
     with ProcessPool() as main_pool:
-        with yaspin(text="Parse applicant's page and export data...", color="yellow", timer=True) as sp:
+        with yaspin(Spinners.dots4, text="Parse applicant's page and export data...", color="yellow", timer=True) as sp:
             main_pool.map(main_processing, pks)
             sp.text = "Crawling complete..."
             sp.ok("🦁")
