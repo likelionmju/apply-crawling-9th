@@ -8,6 +8,7 @@ from docx import Document
 from applicant import Applicant
 from filters import secrets
 
+
 domain = "https://apply.likelion.org"
 apply_url = f"{domain}/apply"
 univ_url = f"{apply_url}/univ"
@@ -94,8 +95,6 @@ def download_file_by_url(u, save_path: Path) -> None:
 
 # Download applicant's extra files
 def download_applicant_file(applicant: Applicant) -> None:
-    if applicant.is_exclude:
-        return
     if not applicant.root_dir.exists():
         applicant.root_dir.mkdir()
     if not applicant.has_file():
@@ -119,7 +118,7 @@ def export_docx(applicant: Applicant) -> None:
         docx.add_paragraph(info)
     for idx, qna in enumerate(zip(secrets["QUESTIONS"], applicant.answers), 1):
         docx.add_paragraph("")
-        docx.add_paragraph(f"{idx}. {qna[0]}")
+        docx.add_paragraph(f"{idx}. {qna[0]}").bold = True
         docx.add_paragraph(qna[1])
     docx.save(f"{applicant.root_dir}/지원서.docx")
 

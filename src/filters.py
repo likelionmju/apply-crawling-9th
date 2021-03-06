@@ -1,5 +1,6 @@
 from threading import Thread
 from queue import Queue
+from yaspin import yaspin
 
 
 secrets = dict()
@@ -40,10 +41,12 @@ class LoginFilter(AbstractFilter):
         from crawler import login
         org_param = self._src_queue.get()
         admin_info = org_param["admin_info"]
-        data = {ck["name"]: ck["value"] for ck in login(admin_info["id"], admin_info["password"])}
-        if data.get("sessionid") is None:
-            print("login failed...")
-            return
+        with yaspin(text="Login start...", timer=True, color="yellow") as sp:
+            data = {ck["name"]: ck["value"] for ck in login(admin_info["id"], admin_info["password"])}
+            if data.get("sessionid") is None:
+                sp.fail("˙∆˚")
+                return
+            sp.ok("🦁")
         next_param = {
             "univ_code": org_param["univ_code"],
             "login_info": data
@@ -67,7 +70,9 @@ class RequestApplicantPageFilter(AbstractFilter):
     def operate(self) -> None:
         from crawler import request_applicant_source
         org_param = self._src_queue.get()
-        new_param = request_applicant_source(org_param["pk"], org_param["login_info"])
+        with yaspin(text=f"Request applicant(PK: {org_param['pk']}) page...", timer=True, color="yellow") as sp:
+            new_param = request_applicant_source(org_param["pk"], org_param["login_info"])
+            sp.ok("🦁")
         self._snk_queue.put(new_param)
 
 
@@ -75,8 +80,15 @@ class ApplicantPageParseFilter(AbstractFilter):
 
     def operate(self) -> None:
         from crawler import parse_applicant_page
-        org_param = self._src_queue.get()
-        self._snk_queue.put(parse_applicant_page(org_param, len(secrets["QUESTIONS"])))
+        with yaspin(text="Parse applicant's info...", timer=True, color="yellow") as sp:
+            org_param = self._src_queue.get()
+            applicant = parse_applicant_page(org_param, len(secrets["QUESTIONS"]))
+            if applicant.is_exclude:
+                sp.text = "This applicant is excluded..."
+            else:
+                sp.text = applicant.name
+            sp.ok("🦁")
+        self._snk_queue.put(applicant)
 
 
 class ExitFilter(AbstractFilter):
@@ -84,7 +96,12 @@ class ExitFilter(AbstractFilter):
     def operate(self) -> None:
         from crawler import download_applicant_file, export_docx
         applicant = self._src_queue.get()
-        download_applicant_file(applicant)
-        export_docx(applicant)
-        self._snk_queue.put(applicant)
+        with yaspin(text="Finalize...", timer=True, color="yellow") as sp:
+            if not applicant.is_exclude:
+                download_applicant_file(applicant)
+                sp.write(f"> Download {applicant.name}'s file complete")
+                export_docx(applicant)
+                sp.write(f"> Export {applicant.name}'s info to {applicant.root_dir}/지원서.docx complete")
+                sp.ok("🦁")
+            self._snk_queue.put(applicant)
 

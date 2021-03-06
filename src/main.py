@@ -18,6 +18,7 @@ def main_processing(param):
     exit_filter.start()
     exit_filter.join()
     # TODO: 2021/03/06 분석 필터 추가하기
+#     ¡™£¢∞§¶•ªº–≠«``∑´´†¥¨ˆˆøπ“‘åß∂ƒ©˙∆˚¬…æΩ≈ç√∫˜˜≤≥ç
 
 
 if __name__ == '__main__':
@@ -40,3 +41,9 @@ if __name__ == '__main__':
     pks = pre.get()
     with ProcessPool() as main_pool:
         main_pool.map(main_processing, pks)
+
+
+
+
+
+
