@@ -118,7 +118,7 @@ def export_docx(applicant: Applicant) -> None:
         docx.add_paragraph(info)
     for idx, qna in enumerate(zip(secrets["QUESTIONS"], applicant.answers), 1):
         docx.add_paragraph("")
-        docx.add_paragraph(f"{idx}. {qna[0]}").bold = True
+        docx.add_paragraph(f"{idx}. {qna[0]}")
         docx.add_paragraph(qna[1])
     docx.save(f"{applicant.root_dir}/지원서.docx")
 
@@ -153,14 +153,13 @@ def request_applicant_source(applicant_pk: str, login_info: dict) -> str:
 
 # Parse applicant's source page using BeautifulSoup
 def parse_applicant_page(page: str, q_count: int) -> Applicant:
-    from applicant import Applicant
     soup = BeautifulSoup(page, features=html_parser)
     applicant_info_container = soup.select_one(applicant_info_container_selector)
     applicant_answer_container = soup.select_one(applicant_answer_container_selector)
 
     applicant_name = applicant_info_container.find(applicant_name_selector).string
     if applicant_name in secrets["EXCLUDES"]:
-        return Applicant(is_exclude=True)
+        return Applicant.get_exclude_applicant()
     applicant_info_list = applicant_info_container.select(applicant_info_selector)
     applicant_answer_list = applicant_answer_container.select(applicant_answer_selector)
     additional = [user_info.contents[1].get(link_attr) for user_info in applicant_info_list[2:]]

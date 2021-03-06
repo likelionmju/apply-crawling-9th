@@ -7,16 +7,16 @@ class Applicant:
     __idx = 0
 
     def __init__(self,
+                 name: str,
+                 entrance_year: str,
+                 major: str,
+                 phone_num: str,
+                 email: str,
+                 answers: list,
+                 git: str,
+                 sns: str,
+                 cdn_file: str,
                  is_exclude: bool = False,
-                 name: str = "",
-                 entrance_year: str = "",
-                 major: str = "",
-                 phone_num: str = "",
-                 email: str = "",
-                 answers: list = (),
-                 git: str = "",
-                 sns: str = "",
-                 cdn_file: str = "",
                  ) -> None:
 
         Applicant.__idx += 1
@@ -33,6 +33,10 @@ class Applicant:
         self.cdn_file: str = cdn_file or "X"
         if not is_exclude:
             self.root_dir: Path = Path(f"../지원자 서류/{self.major}_{self.entrance_year[2:]}_{self.name}")
+
+    @staticmethod
+    def get_exclude_applicant():
+        return Applicant("", "", "", "", "", [], "", "", "", True)
 
     def __is_phone_num_formatted(self) -> bool:
         return self.__phone_num_pattern.fullmatch(self.phone_num) is not None

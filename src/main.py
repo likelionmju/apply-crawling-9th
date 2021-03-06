@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from filters import *
 from queue import Queue
 from pathos.multiprocessing import ProcessPool
@@ -21,6 +23,10 @@ def main_processing(param):
 
 
 if __name__ == '__main__':
+    required_dir = Path("./지원자 서류")
+    if not required_dir.exists():
+        required_dir.mkdir()
+
     init = Queue()
     init_to_login = Queue()
     login_to_pre = Queue()
