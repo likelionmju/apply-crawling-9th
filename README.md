@@ -1,15 +1,11 @@
 Likelion Apply Crawler Project
 ===
-***
 
 ## 요약
 
-***
 [멋쟁이 사자처럼 9기 지원페이지](https://apply.likelion.org)에 지원한 지원자의 정보를 크롤링하여 정리
 
 ## 데모
-
-***
 
 ### 성공
 
@@ -20,8 +16,6 @@ Likelion Apply Crawler Project
 ![실패](fail_demo.gif)
 
 ## 실행 전
-
-***
 
 1. Chrome 버전에 맞는 [ChromeDriver](https://chromedriver.chromium.org/downloads) 를 `./`에 다운
 1. `secrets.json`에 다음 정보를 작성한다.
@@ -52,8 +46,6 @@ Likelion Apply Crawler Project
 
 ## 실행 방법
 
-***
-
 1. `git clone https://github.com/likelionmju/apply_crawling.git`
 1. `python3 -m venv venv`
 1. mac OS: `source venv/bin/activate`  
@@ -62,8 +54,6 @@ Likelion Apply Crawler Project
 1. `python src/main.py`
 
 ## 작동 순서
-
-***
 
 1. [멋쟁이 사자처럼 9기 지원페이지](https://apply.likelion.org)에 로그인
    ```python
@@ -125,8 +115,6 @@ Likelion Apply Crawler Project
 
 ## 사용 라이브러리
 
-***
-
 - `beautifulsoup4 v4.9.3`
 - `pathos v0.2.7`
 - `python-docx v0.8.10`
@@ -136,23 +124,17 @@ Likelion Apply Crawler Project
 
 ## 개발 환경
 
-***
-
 - `IntelliJ IDEA 2020.3.2 (Ultimate Edition)`
 - `macOS Big Sur v11.2.2`
 - `python 3.8.5`
 
 ## 기타
 
-***
-
 - `Pipe-and-Filter` 사용
 - `pathos.multiprocessing`으로 Multiprocessing 구현
 - 압축된 파일에 한글이 포함되어 있는 경우, 파일 명이 깨지는 것을 방지
 
 ## 만든 사람
-
-***
 
 - [AiRini](https://github.com/ygnaiih1680) 명지대학교 융합소프트웨어학부 응용소프트웨어전공 18학번 
 
