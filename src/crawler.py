@@ -222,11 +222,11 @@ def send_email_to_applicant(applicant: Applicant, is_markdown: bool):
         smtp.login(main.secrets["EMAIL"], main.secrets["EMAIL_PASSWORD"])
 
         if applicant.is_pass:
-            msg = MIMEText(main.pass_text, m_type)
-            msg["Subject"] = main.pass_subject
+            msg = MIMEText(main.data["pass_text"], m_type)
+            msg["Subject"] = main.data["pass_subject"]
         else:
-            msg = MIMEText(main.fail_text, m_type)
-            msg["Subject"] = main.fail_subject
+            msg = MIMEText(main.data["fail_text"], m_type)
+            msg["Subject"] = main.data["fail_subject"]
         msg["From"] = main.secrets["EMAIL_FROM"]
         msg["To"] = applicant.email
         smtp.sendmail(main.secrets["EMAIL"], applicant.email, msg.as_string())

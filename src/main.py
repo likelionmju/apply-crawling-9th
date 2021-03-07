@@ -13,14 +13,14 @@ import markdown2
 
 with open("../secrets.json") as f:
     secrets = loads(f.read())
-with open("../data/pass_subject") as p_subject:
-    pass_subject = p_subject.read()
-with open("../data/pass_text.md") as p_text:
-    pass_text = markdown2.markdown(p_text.read())
-with open("../data/fail_subject") as f_subject:
-    fail_subject = f_subject.read()
-with open("../data/fail_text") as f_text:
-    fail_text = f_text.read()
+
+with Path("../data") as data_dir:
+    data = {}
+    for d in data_dir.iterdir():
+        if d.suffix == ".md":
+            data[d.stem] = markdown2.markdown(d.read_text())
+        else:
+            data[d.stem] = d.read_text()
 
 
 def main_thread():
