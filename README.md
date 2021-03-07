@@ -156,6 +156,7 @@ SNS: X
       def gathering_applicant_data(applicants: list):
         ...
       ```
+    - 다른 기준으로 정렬하고 싶다면, crawler.py의 line 241을 수정하여 사용
 
 
 
