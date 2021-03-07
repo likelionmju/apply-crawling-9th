@@ -35,8 +35,7 @@ class Applicant:
             self.root_dir: Path = Path(f"../지원자 서류/{self.major}_{self.entrance_year[2:]}_{self.name}")
 
     def __str__(self) -> str:
-        return \
-            f"""이름: {self.name}
+        return f"""이름: {self.name}
 입학 년도: {self.entrance_year}
 전공: {self.major}
 전화번호: {self.phone_num}
