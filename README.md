@@ -210,6 +210,7 @@ SNS: X
 - `yaspin v1.4.1`
 - `openpyxl v3.0.6`
 - `pandas v1.2.3`
+- `markdown2 v2.4.0`
 
 ## 개발 환경
 
