@@ -195,6 +195,8 @@ def parse_applicant_page(page: str, q_count: int) -> Applicant:
 
 
 def pickle_applicant(applicant: Applicant) -> None:
+    if applicant.is_exclude:
+        return
     pkl_dir = Path(f"../applicant/{applicant.name}.pkl")
     with open(pkl_dir, "wb") as pkl:
         dill.dump(applicant, pkl)
