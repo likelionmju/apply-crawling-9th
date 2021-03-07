@@ -3,7 +3,6 @@ from queue import Queue
 from yaspin import yaspin
 from yaspin.spinners import Spinners
 
-
 secrets = dict()
 
 
@@ -98,7 +97,7 @@ class ApplicantPageParseFilter(AbstractFilter):
         self._snk_queue.put(applicant)
 
 
-class ExitFilter(AbstractFilter):
+class ExportFilter(AbstractFilter):
 
     def operate(self) -> None:
         from crawler import download_applicant_file, export_docx
@@ -108,3 +107,10 @@ class ExitFilter(AbstractFilter):
             export_docx(applicant)
         self._snk_queue.put(applicant)
 
+
+class ApplicantSinkFilter(AbstractFilter):
+
+    def operate(self) -> None:
+        from crawler import pickle_applicant
+        applicant = self._src_queue.get()
+        pickle_applicant(applicant)

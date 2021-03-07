@@ -7,7 +7,7 @@ from shutil import copyfileobj
 from docx import Document
 from applicant import Applicant
 from filters import secrets
-
+import dill
 
 domain = "https://apply.likelion.org"
 apply_url = f"{domain}/apply"
@@ -180,7 +180,8 @@ def parse_applicant_page(page: str, q_count: int) -> Applicant:
                           major=applicant_info_list[0].contents[-2].text,
                           phone_num=applicant_info_list[1].contents[1].text,
                           email=applicant_info_list[1].contents[-2].text,
-                          answers=[applicant_answer_list[idx].contents[1].text for idx in range(q_count)],
+                          answers=[applicant_answer_list[idx].contents[1].text for idx in
+                                   range(q_count)],
                           git=applicant_git,
                           sns=applicant_sns,
                           cdn_file=applicant_file,
@@ -188,3 +189,15 @@ def parse_applicant_page(page: str, q_count: int) -> Applicant:
     applicant.format_phone_num()
 
     return applicant
+
+
+def pickle_applicant(applicant: Applicant) -> None:
+    pkl_dir = Path(f"../applicant/{applicant.name}.pkl")
+    with open(pkl_dir, "wb") as pkl:
+        dill.dump(applicant, pkl)
+
+
+def unpickle_applicant(name: str):
+    pkl_dir = Path(f"../applicant/{name}.pkl")
+    with open(pkl_dir, "rb") as pkl:
+        return dill.loads(pkl.read())
