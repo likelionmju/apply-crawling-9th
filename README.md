@@ -22,7 +22,7 @@ Likelion Apply Crawler Project
     + `ADMIN_ID`: 관리자 아이디
     + `ADMIN_PASSWORD`: 관리자 비밀번호
     + `EXCLUDES`: 제외할 사람들 이름 _(없다면 빈 리스트)_
-    + `ADMIN_ID`: 질문 목록 _(질문 번호는 제외)_
+    + `QUESTIONS`: 질문 목록 _(질문 번호는 제외)_
 
 ### `secrets.json` 작성 예시
 
