@@ -2,8 +2,7 @@ from threading import Thread
 from queue import Queue
 from yaspin import yaspin
 from yaspin.spinners import Spinners
-
-secrets = dict()
+import main
 
 
 class AbstractFilter(Thread):
@@ -18,21 +17,6 @@ class AbstractFilter(Thread):
 
     def operate(self) -> None:
         pass
-
-
-class InitFilter(AbstractFilter):
-
-    def operate(self) -> None:
-        import json
-        org_param = self._src_queue.get()
-        with open(org_param) as f:
-            global secrets
-            secrets = json.loads(f.read())
-            new_param = {
-                "admin_info": {"id": secrets["ADMIN_ID"], "password": secrets["ADMIN_PASSWORD"]},
-                "univ_code": secrets["ADMIN_ID"].split("@")[0]
-            }
-            self._snk_queue.put(new_param)
 
 
 class LoginFilter(AbstractFilter):
@@ -93,7 +77,7 @@ class ApplicantPageParseFilter(AbstractFilter):
     def operate(self) -> None:
         from crawler import parse_applicant_page
         org_param = self._src_queue.get()
-        applicant = parse_applicant_page(org_param, len(secrets["QUESTIONS"]))
+        applicant = parse_applicant_page(org_param, len(main.secrets["QUESTIONS"]))
         self._snk_queue.put(applicant)
 
 
@@ -114,3 +98,4 @@ class ApplicantSinkFilter(AbstractFilter):
         from crawler import pickle_applicant
         applicant = self._src_queue.get()
         pickle_applicant(applicant)
+        self._snk_queue.put(applicant)

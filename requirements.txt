@@ -4,6 +4,7 @@ chardet==4.0.0
 dill==0.3.3
 idna==3.1
 lxml==4.6.2
+markdown2==2.4.0
 multiprocess==0.70.11.1
 pathos==0.2.7
 pox==0.2.9
@@ -14,4 +15,5 @@ selenium==3.141.0
 six==1.15.0
 soupsieve==2.2
 urllib3==1.26.3
-yaspin~=1.4.1
+wcwidth==0.2.5
+yaspin==1.4.1

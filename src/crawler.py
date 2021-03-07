@@ -6,8 +6,11 @@ from zipfile import ZipFile
 from shutil import copyfileobj
 from docx import Document
 from applicant import Applicant
-from filters import secrets
+from email.mime.text import MIMEText
 import dill
+import smtplib
+import main
+import pandas
 
 domain = "https://apply.likelion.org"
 apply_url = f"{domain}/apply"
@@ -116,7 +119,7 @@ def export_docx(applicant: Applicant) -> None:
         return
     for info in applicant.information_stringify():
         docx.add_paragraph(info)
-    for idx, qna in enumerate(zip(secrets["QUESTIONS"], applicant.answers), 1):
+    for idx, qna in enumerate(zip(main.secrets["QUESTIONS"], applicant.answers), 1):
         docx.add_paragraph("")
         docx.add_paragraph(f"{idx}. {qna[0]}")
         docx.add_paragraph(qna[1])
@@ -158,7 +161,7 @@ def parse_applicant_page(page: str, q_count: int) -> Applicant:
     applicant_answer_container = soup.select_one(applicant_answer_container_selector)
 
     applicant_name = applicant_info_container.find(applicant_name_selector).string
-    if applicant_name in secrets["EXCLUDES"]:
+    if applicant_name in main.secrets["EXCLUDES"]:
         return Applicant.get_exclude_applicant()
     applicant_info_list = applicant_info_container.select(applicant_info_selector)
     applicant_answer_list = applicant_answer_container.select(applicant_answer_selector)
@@ -197,7 +200,44 @@ def pickle_applicant(applicant: Applicant) -> None:
         dill.dump(applicant, pkl)
 
 
+def unpickle_all_applicant():
+    rv = []
+    for pkl in Path("../applicant").iterdir():
+        if pkl.suffix == ".pkl":
+            with open(pkl, "rb") as p:
+                rv.append(dill.loads(p.read()))
+    return rv
+
+
 def unpickle_applicant(name: str):
     pkl_dir = Path(f"../applicant/{name}.pkl")
     with open(pkl_dir, "rb") as pkl:
         return dill.loads(pkl.read())
+
+
+def send_email_to_applicant(applicant: Applicant, is_markdown: bool):
+    m_type = "html" if is_markdown else "plain"
+    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
+        smtp.ehlo()
+        smtp.login(main.secrets["EMAIL"], main.secrets["EMAIL_PASSWORD"])
+
+        if applicant.is_pass:
+            msg = MIMEText(main.pass_text, m_type)
+            msg["Subject"] = main.pass_subject
+        else:
+            msg = MIMEText(main.fail_text, m_type)
+            msg["Subject"] = main.fail_subject
+        msg["From"] = main.secrets["EMAIL_FROM"]
+        msg["To"] = applicant.email
+        smtp.sendmail(main.secrets["EMAIL"], applicant.email, msg.as_string())
+
+
+def gathering_applicant_data(applicants: list):
+    records = []
+    for applicant in applicants:
+        if not applicant.is_exclude:
+            records.append(applicant.information_to_dict())
+    df = pandas.DataFrame.from_records(records, index=range(1, len(records) + 1))
+    df = df.sort_values(["전공"])
+    df.to_excel("../applicant/지원자 정보.xlsx")
+

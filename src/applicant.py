@@ -22,7 +22,7 @@ class Applicant:
         Applicant.__idx += 1
         self.__idx = Applicant.__idx
         self.name: str = name
-        self.entrance_year: str = entrance_year
+        self.entrance_year: str = f"{entrance_year}년"
         self.major: str = major
         self.phone_num: str = phone_num
         self.email: str = email
@@ -31,15 +31,12 @@ class Applicant:
         self.git: str = git or "X"
         self.sns: str = sns or "X"
         self.cdn_file: str = cdn_file or "X"
+        self.is_pass: bool = False
         if not is_exclude:
             self.root_dir: Path = Path(f"../지원자 서류/{self.major}_{self.entrance_year[2:]}_{self.name}")
 
     def __str__(self) -> str:
-        return f"""이름: {self.name}
-입학 년도: {self.entrance_year}
-전공: {self.major}
-전화번호: {self.phone_num}
-이메일: {self.email}"""
+        return ", ".join(self.information_stringify())
 
     @staticmethod
     def get_exclude_applicant():
@@ -58,10 +55,23 @@ class Applicant:
     def information_stringify(self):
         return [
             f"이름: {self.name}",
-            f"입학 년도: {self.entrance_year}년",
+            f"입학 년도: {self.entrance_year}",
             f"전공: {self.major}",
             f"전화번호: {self.phone_num}",
             f"이메일: {self.email}",
             f"GitHub: {self.git}",
             f"SNS: {self.sns}",
+            f"합격: {self.is_pass}"
         ]
+
+    def information_to_dict(self) -> dict:
+        return {
+            "이름": self.name,
+            "입학 년도": self.entrance_year,
+            "전공": self.major,
+            "전화번호": self.phone_num,
+            "이메일": self.email,
+            "GitHub": self.git,
+            "SNS": self.sns,
+            "합격": self.is_pass
+        }
