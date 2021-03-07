@@ -156,6 +156,7 @@ SNS: X
       def gathering_applicant_data(applicants: list):
         ...
       ```
+    - 다른 기준으로 정렬하고 싶다면, crawler.py의 line 241을 수정하여 사용
 
 
 
@@ -189,7 +190,7 @@ SNS: X
 
 
 ## 메일 사용 방법
-`./data/`폴더를 생성 후 내부에 `fail_subject`, `fail_text`, `pass_subject`, `pass_text`파일을 작성한다.
+`./data/`폴더를 생성 후 내부에 `fail_subject`, `fail_text`, `pass_subject`, `pass_text`파일을 작성
 
 - `fail_subject`: 탈락자 발송 메일 제목
 - `fail_text`: 탈락자 발송 메일 내용
