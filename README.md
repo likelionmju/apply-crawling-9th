@@ -151,7 +151,7 @@ SNS: X
 11. 지원자의 정보를 `../applicant/[이름].pkl`로 저장
 
 
-12. 모든 지원자의 정보를 `.xlsx`로 정리 _(전공으로 오름차순 정렬)_
+12. 모든 지원자의 정보를 `../applicant/지원자 정보.xlsx`로 정리 _(전공으로 오름차순 정렬)_
       ```python
       def gathering_applicant_data(applicants: list):
         ...
