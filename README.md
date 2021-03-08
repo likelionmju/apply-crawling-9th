@@ -25,7 +25,7 @@ Likelion Apply Crawler Project
     + `QUESTIONS`: 질문 목록 _(질문 번호는 제외)_
     + `EMAIL`: 발신 이메일 *(Gmail)*
     + `EMAIL_PASSWORD`: Gmail 비밀번호 *(Gmail 2중 인증 사용 시 앱 비밀번호)*
-    + `EMAIL_FROM`: 질문 목록 _(질문 번호는 제외)_
+    + `EMAIL_FROM`: 발신 이름
 
 ### `secrets.json` 작성 예시
 
